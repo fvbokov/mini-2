@@ -6,11 +6,20 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace WindowsFormsApp3 {
-
     abstract class Node {
         protected static int size;
+        protected static Color color;
         protected int posX;
         protected int posY;
+
+        public Node(int x = 0, int y = 0) {
+            posX = x;
+            posY = y;
+        }
+        static Node() {
+            color = Color.Green;
+            size = 50;
+        }
 
         public int X {
             get {
@@ -30,7 +39,7 @@ namespace WindowsFormsApp3 {
         }
         public int radius {
             get {
-                return radius;
+                return size;
             }
             set {
                 size = value;
@@ -39,13 +48,11 @@ namespace WindowsFormsApp3 {
 
         abstract public void DrawFigure(Graphics g);
         abstract public bool Contains(int Mx, int My);
-        public Node(int x = 0, int y = 0) {
-            posX = x;
-            posY = y;
-        }
     }
 
     class TriangleNode : Node {
+        public TriangleNode(int x = 0, int y = 0) : base(x, y) { }
+
         override public void DrawFigure(Graphics g) {
             Point top = new Point(posX, posY - size / 2);
             Point left = new Point(posX - size / 2, posY + size);
@@ -56,74 +63,45 @@ namespace WindowsFormsApp3 {
             g.FillPolygon(new SolidBrush(Color.Green), trianglePoints);
         }
 
-        public bool IsInPolygon(Point[] poly, Point p) {//https://stackoverflow.com/questions/4243042/c-sharp-point-in-polygon
-            Point p1, p2;
-            bool inside = false;
-
-            if (poly.Length < 3) {
-                return inside;
-            }
-
-            Point oldPoint = new Point(poly[poly.Length - 1].X, poly[poly.Length - 1].Y);
-
-            for (int i = 0; i < poly.Length; i++) {
-                Point newPoint = new Point(poly[i].X, poly[i].Y);
-
-                if (newPoint.X > oldPoint.X) {
-                    p1 = oldPoint;
-                    p2 = newPoint;
-                }
-                else {
-                    p1 = newPoint;
-                    p2 = oldPoint;
-                }
-
-                if ((newPoint.X < p.X) == (p.X <= oldPoint.X) && (p.Y - (long)p1.Y) * (p2.X - p1.X) < (p2.Y - (long)p1.Y) * (p.X - p1.X)) {
-                    inside = !inside;
-                }
-
-                oldPoint = newPoint;
-            }
-
-            return inside;
-        }
-
         public override bool Contains(int Mx, int My) {
-            Point top = new Point(posX, posY - size / 2);
-            Point left = new Point(posX - size / 2, posY + size);
-            Point right = new Point(posX + size / 2, posY + size);
+            Point point1 = new Point(posX, posY - size / 2);
+            Point point2 = new Point(posX - size / 2, posY + size);
+            Point point3 = new Point(posX + size / 2, posY + size);
 
-            Point[] trianglePoints = { top, left, right,  };
-            if (IsInPolygon(trianglePoints, new Point(Mx, My))) return true;
-            else return false;
+            int product1 = (point1.X - Mx) * (point2.Y - point1.Y) - (point2.X - point1.X) * (point1.Y - My);
+            int product2 = (point2.X - Mx) * (point3.Y - point2.Y) - (point3.X - point2.X) * (point2.Y - My);
+            int product3 = (point3.X - Mx) * (point1.Y - point3.Y) - (point1.X - point3.X) * (point3.Y - My);
+            if ((product1 >= 0 && product2 >= 0 && product3 >= 0) || (product1 < 0 && product2 < 0 && product3 < 0)) {
+                return true;
+			}
+            return false;
         }
-
-        public TriangleNode(int x = 0, int y = 0) : base(x, y) { }
     }
 
     class CircleNode : Node {
+        public CircleNode(int x = 0, int y = 0) : base(x, y) { }
+
         override public void DrawFigure(Graphics g) {
             g.FillEllipse(new SolidBrush(Color.Green), new Rectangle(posX - size / 2, posY - size / 2, size, size));
         }
         public override bool Contains(int Mx, int My) {
-            double length = Math.Sqrt((Mx - (X)) * (Mx - (X)) + (My - (Y)) * (My - (Y)));
+            double length = (Math.Sqrt((Mx - (X)) * (Mx - (X)) + (My - (Y)) * (My - (Y))))*2;
             if (length < size) return true;
             else return false;
         }
-        public CircleNode(int x = 0, int y = 0) : base(x, y) { }
     }
 
     class SquareNode : Node {
+        public SquareNode(int x = 0, int y = 0) : base(x, y) { }
+
         override public void DrawFigure(Graphics g) {
             g.FillRectangle(new SolidBrush(Color.Green), new Rectangle(posX - size / 2, posY - size / 2, size, size));
         }
  
-        
         public override bool Contains(int Mx, int My) {
             Rectangle n = new Rectangle(posX - size / 2, posY - size / 2, size, size);
             if (n.Contains(Mx, My)) return true;
             else return false;
         }
-        public SquareNode(int x = 0, int y = 0) : base(x, y) { }
     }
 }
